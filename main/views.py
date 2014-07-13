@@ -6,6 +6,12 @@ from urllib2 import urlopen
 from simplejson import loads
 import chardet
 import StringIO
+import requests
+import json
+from main.models import File
+from django.core.mail import EmailMessage
+
+
 
 
 
@@ -19,8 +25,13 @@ pass
 
 
 def submit(request):
-	data = csv.reader(request.FILES['file'])
+	from main.models import File
+	file1 = request.FILES['file']
+	data = csv.reader(file1)
 	email = request.POST['email']
+	detail = File(csvfile=file1, email=email)
+	detail.save()
+	
 	account_id = []
 	for row in data:
 		print row
@@ -32,53 +43,54 @@ def submit(request):
 	k = []	
 	for j in current_acnt_id:
 		k.append(j[1])
-	print k
+	
+	#print k           #list of current account ids as strings
+	intlist = []
+	for i in k:
+		j = int(i)
+		intlist.append(j)
+		#print j
+	#print intlist      # account ids typecasted in to integers
 
 		
-	"""
-	account_id = ['act_1377346239145180', 'act_1382514281960557']
-	current_acnt_id = []
-	for i in account_id:
-		y = i.split('_')
-		current_acnt_id.append(y[1])
-		"""
-
-	for i in x:
-		data = loads(urlopen('https://graph.facebook.com/'+i+'/customaudiences?fields=account_id&access_token=CAACcXbmWPQMBAHxPC0pKxsN5jZBzlR9UU1Vj8wMpZBkwwg1om63w4rlCh5oxMbkchL5KTwmWMOQtnSig1pKwoG6V7wuAbQ2mDoiarKglnN9a0CWdebQesJBVCrUO1WmyMmzMk6ZBixPLRzgNDhR4sd8JNrnoU5FsWfDKnls6anNJFjviDVj').read())
-		print data
-
 	
+ 
+	id_list = []
+	for i in x:
+		data = requests.get('https://graph.facebook.com/'+i+'/customaudiences?fields=account_id&access_token=CAACcXbmWPQMBAHxPC0pKxsN5jZBzlR9UU1Vj8wMpZBkwwg1om63w4rlCh5oxMbkchL5KTwmWMOQtnSig1pKwoG6V7wuAbQ2mDoiarKglnN9a0CWdebQesJBVCrUO1WmyMmzMk6ZBixPLRzgNDhR4sd8JNrnoU5FsWfDKnls6anNJFjviDVj')
+		jsondata = data.json()['data']
+		print jsondata
+		
+		for j in jsondata:
+			if j['account_id'] in intlist:
+				id_list.append(j['id']) #getting list of ID's
+	
+	failed_request = 0
+	Succeeded_request = 0
+	mailresponse = []
+	for i in intlist:
+		for j in id_list:
+				payload = {'access_token': 'CAACcXbmWPQMBAHxPC0pKxsN5jZBzlR9UU1Vj8wMpZBkwwg1om63w4rlCh5oxMbkchL5KTwmWMOQtnSig1pKwoG6V7wuAbQ2mDoiarKglnN9a0CWdebQesJBVCrUO1WmyMmzMk6ZBixPLRzgNDhR4sd8JNrnoU5FsWfDKnls6anNJFjviDVj' ,'adaccounts': [i]} 
+				r = requests.post('https://graph.facebook.com/'+j+'/adaccounts', data=payload)
+				#counting the response
+				if r.json()==1:
+					Succeeded_request+=1
+				else:
+					failed_request+=1
+				
+
+	x = str(Succeeded_request)
+	y = str(failed_request)
+	attachment = File.objects.get(email=email)
+	attachfile = attachment.csvfile
+
+	mail = EmailMessage('Audience Sharing | File: <attachment.csv> | ['+x+'] Succeeded, ['+y+'] Failed', 'Custom Audience Sharing tool', to=[email])
+	mail.attach('attachment.csv', attachfile.read(), 'text/csv')
+	mail.send()
 
 	return HttpResponseRedirect('/')
 
 
-def upload(request):
-	email = request.POST['email']
-	#paramFile = request.FILES['file'].read()
-	data = csv.DictReader(request.FILES['file'])
-
-
-	#data = csv.DictReader(paramFile)
-	list1 = []
-	for row in data:
-		list1.append(row)
-	
-	print list1
-	"""
-	content = f.read()
-	encoding = chardet.detect(content)['encoding']
-	if encoding != 'utf-8':
-         content = content.decode(encoding, 'replace').encode('utf-8')
-
-   	filestream = StringIO.StringIO(content)
-   	dialect = csv.Sniffer().sniff(content)
-   	reader = csv.DictReader(filestream.read().splitlines(), dialect=dialect)
-   	print email
-   	for row in reader:
-   		print row
-   		"""
-   
-   	return HttpResponseRedirect('/')
 
    
     
