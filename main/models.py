@@ -4,6 +4,7 @@ import os.path
 
 
 class File(models.Model):
+	pid = models.CharField(max_length=10)
 	csvfile = models.FileField(upload_to='csvfiles/%Y/%m/%d')
 	email = models.CharField(max_length=40)
 

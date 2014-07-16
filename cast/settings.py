@@ -161,14 +161,14 @@ LOGGING = {
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'your gmail email id'
-EMAIL_HOST_PASSWORD = 'your password'
+EMAIL_HOST_USER = 'iambotiwork@gmail.com'
+EMAIL_HOST_PASSWORD = 'dontbesmart'
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'shashiessp@gmail.com'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 import dj_database_url
-DATABASES['default'] =  dj_database_url.config()
+#DATABASES['default'] =  dj_database_url.config()
 
 # Honor the 'X-Forwarded-Proto' header for request.is_secure()
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
